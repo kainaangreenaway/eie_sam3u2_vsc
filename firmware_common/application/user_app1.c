@@ -62,7 +62,7 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
-
+static u8 UserApp_au8GameName[] = "The Memory Game";
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -92,6 +92,15 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+  LedOff(WHITE);          //LEDS initialized
+  LedOff(PURPLE);
+  LedOff(BLUE);
+  LedOff(CYAN);
+  LedOff(GREEN);
+  LedOff(YELLOW);
+  LedOff(ORANGE);
+  LedOff(RED);
+  
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -102,7 +111,11 @@ void UserApp1Initialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp1_pfStateMachine = UserApp1SM_Error;
   }
-
+  LcdClearChars(LINE1_START_ADDR + 13,15);
+  LcdCommand(LCD_CLEAR_CMD); 
+  LcdMessage(LINE1_START_ADDR, UserApp_au8GameName);
+  LcdMessage(LINE2_START_ADDR, "Press Any Button to Begin");
+  //LcdCommand(LCD_SHIFT_DISPLAY | 0x08);
 } /* end UserApp1Initialize() */
 
   
@@ -140,7 +153,51 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-     
+  static u8 buttons_pressed_to_begin = 0;
+  static u8 buttons_to_lights = 0;
+  if(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
+    buttons_pressed_to_begin++;
+  }
+  if (buttons_pressed_to_begin == 1) {
+    LcdCommand(LCD_CLEAR_CMD);
+  }
+  else if (buttons_pressed_to_begin ==2 ){
+    buttons_pressed_to_begin = 2;
+    LcdMessage(LINE1_START_ADDR, "hold each button");
+    LcdMessage(LINE2_START_ADDR, "see what it do ");
+  if (IsButtonHeld(BUTTON0, 500)){
+    LedOn(WHITE);
+    PWMAudioSetFrequency(BUZZER1,500);
+    PWMAudioOn(BUZZER1);
+  }
+  if (IsButtonHeld(BUTTON1,500)){
+    LedOn(BLUE);
+    PWMAudioSetFrequency(BUZZER1,392);
+    PWMAudioOn(BUZZER1);
+  }
+  if (IsButtonHeld(BUTTON2,500)){
+    LedOn(YELLOW);
+    PWMAudioSetFrequency(BUZZER1,330);
+    PWMAudioOn(BUZZER1);
+  }
+  if (IsButtonHeld(BUTTON3,500)){
+    LedOn(RED);
+    PWMAudioSetFrequency(BUZZER1,294);
+    PWMAudioOn(BUZZER1);
+  }
+  if (!(IsButtonHeld(BUTTON0, 500) || IsButtonHeld(BUTTON1, 500) ||
+      IsButtonHeld(BUTTON2, 500) || IsButtonHeld(BUTTON3, 500))) {
+      ButtonAcknowledge(BUTTON0);
+      ButtonAcknowledge(BUTTON1);
+      ButtonAcknowledge(BUTTON2);
+      ButtonAcknowledge(BUTTON3);
+      LedOff(WHITE);
+      LedOff(BLUE);
+      LedOff(YELLOW);
+      LedOff(RED);
+      PWMAudioOff(BUZZER1);
+}
+}  
 } /* end UserApp1SM_Idle() */
      
 
@@ -157,3 +214,13 @@ static void UserApp1SM_Error(void)
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* End of File                                                                                                        */
 /*--------------------------------------------------------------------------------------------------------------------*/
+
+// Kainaans main project to do list:
+//figure out how to scroll the lcd messages to begin
+//clear start screen and print next message 
+// flash each buttons led and buzzer
+
+//up to this point i got first screen to work
+// then second screen
+//then the buttons and associated leds and buzzers to go but not shut off properly 
+//after the buttons were released 
