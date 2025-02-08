@@ -39,6 +39,7 @@ PROTECTED FUNCTIONS
 
 #include "configuration.h"
 
+
 /***********************************************************************************************************************
 Global variable definitions with scope across entire project.
 All Global variable names shall start with "G_<type>UserApp1"
@@ -153,8 +154,20 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
+  void delay_1s();
+  void whitelightandbuzz();
+  void bluelightandbuzz();
+  void yellowlightandbuzz();
+  void redlightandbuzz();
+  void deacwhitelightandbuzz();
+  void deacbluelightandbuzz();
+  void deacyellowlightandbuzz();
+  void deacredlightandbuzz();
+
   static u8 buttons_pressed_to_begin = 0;
   static u8 buttons_to_lights = 0;
+  static u8 transition_to_lvl_1 = 0;
+
   if(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
     buttons_pressed_to_begin++;
   }
@@ -165,28 +178,25 @@ static void UserApp1SM_Idle(void)
     buttons_pressed_to_begin = 2;
     LcdMessage(LINE1_START_ADDR, "hold each button");
     LcdMessage(LINE2_START_ADDR, "see what it do ");
-  if (IsButtonHeld(BUTTON0, 500)){
-    LedOn(WHITE);
-    PWMAudioSetFrequency(BUZZER1,500);
-    PWMAudioOn(BUZZER1);
+  if (IsButtonHeld(BUTTON0, 200)){
+    buttons_to_lights++;
+    whitelightandbuzz();
   }
-  if (IsButtonHeld(BUTTON1,500)){
-    LedOn(BLUE);
-    PWMAudioSetFrequency(BUZZER1,392);
-    PWMAudioOn(BUZZER1);
+  if (IsButtonHeld(BUTTON1,200)){
+    buttons_to_lights++;
+    bluelightandbuzz();
   }
-  if (IsButtonHeld(BUTTON2,500)){
-    LedOn(YELLOW);
-    PWMAudioSetFrequency(BUZZER1,330);
-    PWMAudioOn(BUZZER1);
+  if (IsButtonHeld(BUTTON2,200)){
+    buttons_to_lights++;
+    yellowlightandbuzz();
   }
-  if (IsButtonHeld(BUTTON3,500)){
-    LedOn(RED);
-    PWMAudioSetFrequency(BUZZER1,294);
-    PWMAudioOn(BUZZER1);
+  if (IsButtonHeld(BUTTON3,200)){
+    buttons_to_lights=40;
+    redlightandbuzz();
+    //delay_1s();
   }
-  if (!(IsButtonHeld(BUTTON0, 500) || IsButtonHeld(BUTTON1, 500) ||
-      IsButtonHeld(BUTTON2, 500) || IsButtonHeld(BUTTON3, 500))) {
+  if (!(IsButtonHeld(BUTTON0, 200) || IsButtonHeld(BUTTON1, 200) ||
+      IsButtonHeld(BUTTON2, 200) || IsButtonHeld(BUTTON3, 200))) {
       ButtonAcknowledge(BUTTON0);
       ButtonAcknowledge(BUTTON1);
       ButtonAcknowledge(BUTTON2);
@@ -197,9 +207,64 @@ static void UserApp1SM_Idle(void)
       LedOff(RED);
       PWMAudioOff(BUZZER1);
 }
+  if(buttons_to_lights >= 40){
+    LcdCommand(LCD_CLEAR_CMD);
+    LcdMessage(LINE1_START_ADDR, "now copy the lights");
+    LcdMessage(LINE2_START_ADDR, "and or sounds :)");
+    //delay_1s();
+    transition_to_lvl_1 =1;
+  }
+  if (transition_to_lvl_1 ==1){
+    delay_1s();
+    whitelightandbuzz();
+    delay_1s();
+    //deacwhitelightandbuzz();
+  }
+
 }  
 } /* end UserApp1SM_Idle() */
-     
+ void whitelightandbuzz(){
+    LedOn(WHITE);
+    PWMAudioSetFrequency(BUZZER1,500);
+    PWMAudioOn(BUZZER1);
+ }
+  void bluelightandbuzz(){
+    LedOn(BLUE);
+    PWMAudioSetFrequency(BUZZER1,392);
+    PWMAudioOn(BUZZER1);
+ }
+  void yellowlightandbuzz(){
+    LedOn(YELLOW);
+    PWMAudioSetFrequency(BUZZER1,330);
+    PWMAudioOn(BUZZER1);
+ }
+  void redlightandbuzz(){
+    LedOn(RED);
+    PWMAudioSetFrequency(BUZZER1,294);
+    PWMAudioOn(BUZZER1);
+ }
+ void deacwhitelightandbuzz(){
+  LedOff(WHITE);
+  PWMAudioOff(BUZZER1);
+ }
+  void deacbluelightandbuzz(){
+  LedOff(BLUE);
+  PWMAudioOff(BUZZER1);
+ }
+  void deacyellowlightandbuzz(){
+  LedOff(YELLOW);
+  PWMAudioOff(BUZZER1);
+ }
+  void deacredlightandbuzz(){
+  LedOff(RED);
+  PWMAudioOff(BUZZER1);
+ }
+ void delay_1s() {
+    u16 delay_counter = 0; 
+    while(delay_counter < 2 * (u16)500){
+    delay_counter++;
+    }
+}
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
@@ -224,3 +289,24 @@ static void UserApp1SM_Error(void)
 // then second screen
 //then the buttons and associated leds and buzzers to go but not shut off properly 
 //after the buttons were released 
+
+//spare code
+    // u16blinkcounter++;
+    // if (u16blinkcounter==250){
+    //   u16blinkcounter=0;
+    //   u8counter++;
+      // if(u8counter==16){
+      //   u8counter=0;
+      // }
+      // if(u8counter &0x01){
+      //   redlightandbuzz();
+      // }
+      // if(u8counter & 0x02){
+      //   whitelightandbuzz;
+      // }
+      // if(u8counter& 0x04){
+      // bluelightandbuzz;
+      // }
+      // if(u8counter & 0x08){
+      //   yellowlightandbuzz;
+      // }
