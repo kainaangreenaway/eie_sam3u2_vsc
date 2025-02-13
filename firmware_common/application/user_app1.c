@@ -38,7 +38,7 @@ PROTECTED FUNCTIONS
 **********************************************************************************************************************/
 
 #include "configuration.h"
-
+// #include "unistd.h"
 
 /***********************************************************************************************************************
 Global variable definitions with scope across entire project.
@@ -163,7 +163,7 @@ static void UserApp1SM_Idle(void)
   void deacbluelightandbuzz();
   void deacyellowlightandbuzz();
   void deacredlightandbuzz();
-
+  
   static u8 buttons_pressed_to_begin = 0;
   static u8 buttons_to_lights = 0;
   static u8 transition_to_lvl_1 = 0;
@@ -193,7 +193,7 @@ static void UserApp1SM_Idle(void)
   if (IsButtonHeld(BUTTON3,200)){
     buttons_to_lights=40;
     redlightandbuzz();
-    //delay_1s();
+    //sleep(1);
   }
   if (!(IsButtonHeld(BUTTON0, 200) || IsButtonHeld(BUTTON1, 200) ||
       IsButtonHeld(BUTTON2, 200) || IsButtonHeld(BUTTON3, 200))) {
@@ -211,14 +211,14 @@ static void UserApp1SM_Idle(void)
     LcdCommand(LCD_CLEAR_CMD);
     LcdMessage(LINE1_START_ADDR, "now copy the lights");
     LcdMessage(LINE2_START_ADDR, "and or sounds :)");
-    //delay_1s();
+    sleep(1);
     transition_to_lvl_1 =1;
   }
   if (transition_to_lvl_1 ==1){
-    delay_1s();
+    //sleep(1);
     whitelightandbuzz();
-    delay_1s();
-    //deacwhitelightandbuzz();
+    //sleep(1);
+    deacwhitelightandbuzz();
   }
 
 }  
