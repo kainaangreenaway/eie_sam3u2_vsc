@@ -67,7 +67,18 @@ static u8 UserApp_au8GameName[] = "The Memory Game";
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
-
+void delay_1s();
+void delay_non_blocking();
+void whitelightandbuzz();
+void bluelightandbuzz();
+void yellowlightandbuzz();
+void redlightandbuzz();
+void deacwhitelightandbuzz();
+void deacbluelightandbuzz();
+void deacyellowlightandbuzz();
+void deacredlightandbuzz();
+void whitegameseq();
+void level_1();
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @publicsection */                                                                                            
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -154,74 +165,104 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-  void delay_1s();
-  void whitelightandbuzz();
-  void bluelightandbuzz();
-  void yellowlightandbuzz();
-  void redlightandbuzz();
-  void deacwhitelightandbuzz();
-  void deacbluelightandbuzz();
-  void deacyellowlightandbuzz();
-  void deacredlightandbuzz();
+  // void delay_1s();
+  // void whitelightandbuzz();
+  // void bluelightandbuzz();
+  // void yellowlightandbuzz();
+  // void redlightandbuzz();
+  // void deacwhitelightandbuzz();
+  // void deacbluelightandbuzz();
+  // void deacyellowlightandbuzz();
+  // void deacredlightandbuzz();
+  // void whitegameseq();
+  // void level_1();
   
   static u8 buttons_pressed_to_begin = 0;
+  static u8 button0_pressed = 0;
+  static u8 button1_pressed = 0;
+  static u8 button2_pressed = 0;
+  static u8 button3_pressed = 0;
+  static u8 all_buttons_pressed = 0;
   static u8 buttons_to_lights = 0;
   static u8 transition_to_lvl_1 = 0;
+  static u8 to_level_1 = 0;
 
-  if(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
-    buttons_pressed_to_begin++;
+  if (buttons_pressed_to_begin == 0){
+    if(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
+      LcdCommand(LCD_CLEAR_CMD);
+      buttons_pressed_to_begin = 1;
+    }
   }
-  if (buttons_pressed_to_begin == 1) {
-    LcdCommand(LCD_CLEAR_CMD);
-  }
-  else if (buttons_pressed_to_begin ==2 ){
-    buttons_pressed_to_begin = 2;
-    LcdMessage(LINE1_START_ADDR, "hold each button");
-    LcdMessage(LINE2_START_ADDR, "see what it do ");
-  if (IsButtonHeld(BUTTON0, 200)){
-    buttons_to_lights++;
-    whitelightandbuzz();
-  }
-  if (IsButtonHeld(BUTTON1,200)){
-    buttons_to_lights++;
-    bluelightandbuzz();
-  }
-  if (IsButtonHeld(BUTTON2,200)){
-    buttons_to_lights++;
-    yellowlightandbuzz();
-  }
-  if (IsButtonHeld(BUTTON3,200)){
-    buttons_to_lights=40;
-    redlightandbuzz();
-    //sleep(1);
-  }
-  if (!(IsButtonHeld(BUTTON0, 200) || IsButtonHeld(BUTTON1, 200) ||
-      IsButtonHeld(BUTTON2, 200) || IsButtonHeld(BUTTON3, 200))) {
+
+  if (buttons_pressed_to_begin == 1){
+    static u8 message_shown = 0;
+    if (!message_shown) {
+        LcdMessage(LINE1_START_ADDR, "press each button");
+        LcdMessage(LINE2_START_ADDR, "see what it do");
+        message_shown = 1;  
+    }
+    if (WasButtonPressed(BUTTON0)){
       ButtonAcknowledge(BUTTON0);
+      LedOn(WHITE);
+      PWMAudioSetFrequency(BUZZER1,500);
+      button0_pressed = 1;
+    }
+
+    if (WasButtonPressed(BUTTON1)){
       ButtonAcknowledge(BUTTON1);
+      LedOn(BLUE);
+      PWMAudioSetFrequency(BUZZER1,392);
+      button1_pressed = 1;
+    }
+    if (WasButtonPressed(BUTTON2)){
       ButtonAcknowledge(BUTTON2);
+      LedOn(YELLOW);
+      PWMAudioSetFrequency(BUZZER1,330);
+      button2_pressed = 1;
+    }
+    if (WasButtonPressed(BUTTON3)){
       ButtonAcknowledge(BUTTON3);
+      LedOn(RED);
+      PWMAudioSetFrequency(BUZZER1,294);
+      button3_pressed = 1;
+    }
+    if (IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
+      PWMAudioOn(BUZZER1);
+    }
+    else{
+      PWMAudioOff(BUZZER1);
       LedOff(WHITE);
       LedOff(BLUE);
       LedOff(YELLOW);
       LedOff(RED);
-      PWMAudioOff(BUZZER1);
-}
-  if(buttons_to_lights >= 40){
-    LcdCommand(LCD_CLEAR_CMD);
-    LcdMessage(LINE1_START_ADDR, "now copy the lights");
-    LcdMessage(LINE2_START_ADDR, "and or sounds :)");
-    sleep(1);
-    transition_to_lvl_1 =1;
+    }
   }
-  if (transition_to_lvl_1 ==1){
-    //sleep(1);
-    whitelightandbuzz();
-    //sleep(1);
-    deacwhitelightandbuzz();
+  if (button0_pressed && button1_pressed && button2_pressed && button3_pressed && !all_buttons_pressed) {
+    all_buttons_pressed = 1;  
+    delay_1s();
+    LcdCommand(LCD_CLEAR_CMD);
+    //delay_non_blocking();
+    transition_to_lvl_1 = 1;
   }
 
-}  
+  if (transition_to_lvl_1 ==1){
+    static u8 message_shown_level_1 = 0;
+    if (!message_shown_level_1) {
+        LcdMessage(LINE1_START_ADDR, "now copy the lights");
+        LcdMessage(LINE2_START_ADDR, "and sounds");
+        message_shown_level_1 = 1;
+        to_level_1 = 1;
+
+    }
+  }
+
+  static u8 level_1_executed = 0;  // New flag to track execution
+
+  if (to_level_1 == 1 && level_1_executed == 0){
+    level_1();
+    level_1_executed = 1;  // Prevent it from running again
+  }
+
 } /* end UserApp1SM_Idle() */
  void whitelightandbuzz(){
     LedOn(WHITE);
@@ -259,13 +300,48 @@ static void UserApp1SM_Idle(void)
   LedOff(RED);
   PWMAudioOff(BUZZER1);
  }
- void delay_1s() {
-    u16 delay_counter = 0; 
-    while(delay_counter < 2 * (u16)500){
-    delay_counter++;
-    }
+ void delay_non_blocking() {
+  static uint32_t last_time = 0;
+  if (G_u32SystemTime1ms - last_time >= 1000) {
+    last_time = G_u32SystemTime1ms;
+    // Do something after 1s
+  }
 }
-
+void delay_1s(void)
+{
+    uint32_t start_time = G_u32SystemTime1ms;
+    while ( (G_u32SystemTime1ms - start_time) < 1000 );  // Wait for 1000ms
+}
+ void whitegameseq(){
+  delay_1s();
+  whitelightandbuzz();
+  delay_1s();
+  deacwhitelightandbuzz();
+ }
+ void bluegameseq(){
+  delay_1s();
+  bluelightandbuzz();
+  delay_1s();
+  deacbluelightandbuzz();
+ }
+ void yellowgameseq(){
+  delay_1s();
+  yellowlightandbuzz();
+  delay_1s();
+  deacyellowlightandbuzz();
+ }
+ void redgameseq(){
+  delay_1s();
+  redlightandbuzz();
+  delay_1s();
+  deacredlightandbuzz();
+ }
+void level_1(){
+  whitegameseq();
+  yellowgameseq();
+  bluegameseq();
+  redgameseq();
+}
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
 static void UserApp1SM_Error(void)          
@@ -310,3 +386,54 @@ static void UserApp1SM_Error(void)
       // if(u8counter & 0x08){
       //   yellowlightandbuzz;
       // }
+
+      // was at line 178   // if (buttons_pressed_to_begin == 1) {
+  //   LcdCommand(LCD_CLEAR_CMD);
+  //   delay_1s();
+  // //   buttons_pressed_to_begin++;
+  // // }
+  // // if (buttons_pressed_to_begin == 2 ){
+  // //   buttons_pressed_to_begin = 2;
+  //   LcdMessage(LINE1_START_ADDR, "hold each button");
+  //   LcdMessage(LINE2_START_ADDR, "see what it do ");
+  // }
+
+    // if (IsButtonHeld(BUTTON0, 200)){
+  //   buttons_to_lights++;
+  //   whitelightandbuzz();
+  // }
+  // if (IsButtonHeld(BUTTON1,200)){
+  //   buttons_to_lights++;
+  //   bluelightandbuzz();
+  // }
+  // if (IsButtonHeld(BUTTON2,200)){
+  //   buttons_to_lights++;
+  //   yellowlightandbuzz();
+  // }
+  // if (IsButtonHeld(BUTTON3,200)){
+  //   redlightandbuzz();
+  //   delay_1s();
+  //   delay_1s();
+  //   buttons_to_lights=40;
+  // }
+//   if (!(IsButtonHeld(BUTTON0, 200) || IsButtonHeld(BUTTON1, 200) ||
+//       IsButtonHeld(BUTTON2, 200) || IsButtonHeld(BUTTON3, 200))) {
+//       ButtonAcknowledge(BUTTON0);
+//       ButtonAcknowledge(BUTTON1);
+//       ButtonAcknowledge(BUTTON2);
+//       ButtonAcknowledge(BUTTON3);
+//       LedOff(WHITE);
+//       LedOff(BLUE);
+//       LedOff(YELLOW);
+//       LedOff(RED);
+//       PWMAudioOff(BUZZER1);
+// }
+
+  // if(buttons_to_lights >= 40){
+  //   LcdCommand(LCD_CLEAR_CMD);
+  //   LcdMessage(LINE1_START_ADDR, "now copy the lights");
+  //   LcdMessage(LINE2_START_ADDR, "and or sounds :)");
+  //   delay_1s();
+  //   transition_to_lvl_1 = 1;
+  // }
+      // good interview question: what do you enjoy most about working for garmin/ in this field
