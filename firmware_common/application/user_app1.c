@@ -183,53 +183,54 @@ static void UserApp1SM_Idle(void)
   static u8 button2_pressed = 0;
   static u8 button3_pressed = 0;
   static u8 all_buttons_pressed = 0;
-  static u8 buttons_to_lights = 0;
   static u8 transition_to_lvl_1 = 0;
   static u8 to_level_1 = 0;
-
-  if (buttons_pressed_to_begin == 0){
-    if(IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
-      LcdCommand(LCD_CLEAR_CMD);
+  static u8 level_1_executed = 0;
+  static u8 level_1_complete = 0;
+  
+  if (buttons_pressed_to_begin == 0) {
+    if (IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)) {
+      LcdCommand(LCD_CLEAR_CMD); // Clear LCD when buttons are pressed
       buttons_pressed_to_begin = 1;
     }
   }
-
-  if (buttons_pressed_to_begin == 1){
+  
+  if (buttons_pressed_to_begin == 1) {
     static u8 message_shown = 0;
     if (!message_shown) {
-        LcdMessage(LINE1_START_ADDR, "press each button");
-        LcdMessage(LINE2_START_ADDR, "see what it do");
-        message_shown = 1;  
+      LcdMessage(LINE1_START_ADDR, "press each button");
+      LcdMessage(LINE2_START_ADDR, "see what it do");
+      message_shown = 1;
     }
-    if (WasButtonPressed(BUTTON0)){
+    // Handle button presses and LEDs/audio
+    if (WasButtonPressed(BUTTON0)) {
       ButtonAcknowledge(BUTTON0);
       LedOn(WHITE);
-      PWMAudioSetFrequency(BUZZER1,500);
+      PWMAudioSetFrequency(BUZZER1, 500);
       button0_pressed = 1;
     }
-
-    if (WasButtonPressed(BUTTON1)){
+    if (WasButtonPressed(BUTTON1)) {
       ButtonAcknowledge(BUTTON1);
       LedOn(BLUE);
-      PWMAudioSetFrequency(BUZZER1,392);
+      PWMAudioSetFrequency(BUZZER1, 392);
       button1_pressed = 1;
     }
-    if (WasButtonPressed(BUTTON2)){
+    if (WasButtonPressed(BUTTON2)) {
       ButtonAcknowledge(BUTTON2);
       LedOn(YELLOW);
-      PWMAudioSetFrequency(BUZZER1,330);
+      PWMAudioSetFrequency(BUZZER1, 330);
       button2_pressed = 1;
     }
-    if (WasButtonPressed(BUTTON3)){
+    if (WasButtonPressed(BUTTON3)) {
       ButtonAcknowledge(BUTTON3);
       LedOn(RED);
-      PWMAudioSetFrequency(BUZZER1,294);
+      PWMAudioSetFrequency(BUZZER1, 294);
       button3_pressed = 1;
     }
-    if (IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)){
+    // Update buzzer and LED based on button presses
+    if (IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)) {
       PWMAudioOn(BUZZER1);
-    }
-    else{
+    } else {
       PWMAudioOff(BUZZER1);
       LedOff(WHITE);
       LedOff(BLUE);
@@ -237,30 +238,78 @@ static void UserApp1SM_Idle(void)
       LedOff(RED);
     }
   }
+  
+  // All buttons pressed, set flags for transition
   if (button0_pressed && button1_pressed && button2_pressed && button3_pressed && !all_buttons_pressed) {
-    all_buttons_pressed = 1;  
+    all_buttons_pressed = 1;
     delay_1s();
-    LcdCommand(LCD_CLEAR_CMD);
-    //delay_non_blocking();
-    transition_to_lvl_1 = 1;
+    PWMAudioOff(BUZZER1);
+    LedOff(WHITE);
+    LedOff(BLUE);
+    LedOff(YELLOW);
+    LedOff(RED);
+    transition_to_lvl_1 = 1; // Set transition flag
   }
-
-  if (transition_to_lvl_1 ==1){
+  
+  // Handle transition to level 1
+  if (transition_to_lvl_1 == 1) {
     static u8 message_shown_level_1 = 0;
     if (!message_shown_level_1) {
-        LcdMessage(LINE1_START_ADDR, "now copy the lights");
-        LcdMessage(LINE2_START_ADDR, "and sounds");
-        message_shown_level_1 = 1;
-        to_level_1 = 1;
-
+      LcdCommand(LCD_CLEAR_CMD); // Clear LCD before showing the next message
+      delay_1s();  // Delay to allow clearing
+      LcdMessage(LINE1_START_ADDR, "now copy the lights");
+      LcdMessage(LINE2_START_ADDR, "and sounds");
+      delay_1s();  // Wait for a bit before transitioning
+      message_shown_level_1 = 1;
+      to_level_1 = 1; // Set flag for level 1 transition
     }
   }
-
-  static u8 level_1_executed = 0;  // New flag to track execution
-
-  if (to_level_1 == 1 && level_1_executed == 0){
-    level_1();
-    level_1_executed = 1;  // Prevent it from running again
+  
+  // Execute level 1 when the flag is set
+  if (to_level_1 == 1 && level_1_executed == 0) {
+    level_1();  // Execute the sequence
+    level_1_executed = 1; // Set flag to indicate level 1 is done
+  }
+  
+  // Handle completion of level 1 and transition to level 2
+  if (level_1_executed) {
+    static u8 button0_pressed = 0;
+    static u8 button2_pressed = 0;
+    static u8 button1_pressed = 0;
+    static u8 button3_pressed = 0;
+    
+    if (IsButtonPressed(BUTTON0) && !button0_pressed) {
+      ButtonAcknowledge(BUTTON0);
+      button0_pressed = 1;
+    }
+    
+    if (IsButtonPressed(BUTTON2) && button0_pressed && !button2_pressed) {
+      ButtonAcknowledge(BUTTON2);
+      button2_pressed = 1;
+    }
+    
+    if (IsButtonPressed(BUTTON1) && button2_pressed && !button1_pressed) {
+      ButtonAcknowledge(BUTTON1);
+      button1_pressed = 1;
+    }
+    
+    if (IsButtonPressed(BUTTON3) && button1_pressed && !button3_pressed) {
+      ButtonAcknowledge(BUTTON3);
+      button3_pressed = 1;
+    }
+    
+    // Check if all buttons in the sequence are pressed
+    if (button0_pressed && button2_pressed && button1_pressed && button3_pressed) {
+      level_1_complete = 1;
+    }
+  }
+  
+  // Transition to level 2 after completion of level 1
+  if (level_1_complete) {
+    LcdCommand(LCD_CLEAR_CMD);  // Clear screen
+    delay_1s();  // Wait for 1 second
+    LcdMessage(LINE1_START_ADDR, "level 2");  // Show level 2 message
+    level_1_complete = 0;  // Reset for next use
   }
 
 } /* end UserApp1SM_Idle() */
@@ -337,10 +386,16 @@ void delay_1s(void)
   deacredlightandbuzz();
  }
 void level_1(){
+  WATCHDOG_BONE();
   whitegameseq();
+  WATCHDOG_BONE();
   yellowgameseq();
+  WATCHDOG_BONE();
   bluegameseq();
+  WATCHDOG_BONE();
   redgameseq();
+  WATCHDOG_BONE();
+  // need to add a watchdog timer
 }
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
