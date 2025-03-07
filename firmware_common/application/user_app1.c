@@ -180,13 +180,13 @@ static void UserApp1SM_Idle(void)
   // Game state variables
   static u8 game_state = 0;  // 0: Initial, 1: Tutorial, 2-6: Levels 1-5, 7: Game Complete
   
-  // Button tracking
+  // Button track
   static u8 button0_pressed = 0;
   static u8 button1_pressed = 0;
   static u8 button2_pressed = 0;
   static u8 button3_pressed = 0;
   
-  // Sequence tracking
+  // Sequence track
   static u8 sequence_position = 0;
   
   // Game flow control
@@ -357,23 +357,23 @@ static void UserApp1SM_Idle(void)
       switch (game_state) {
         case 2:  // Level 1
           current_pattern = level1_pattern;
-          pattern_length = 4;  // Explicitly set the length
+          pattern_length = 4;  // level length
           break;
         case 3:  // Level 2
           current_pattern = level2_pattern;
-          pattern_length = 5;  // Explicitly set the length
+          pattern_length = 5;  // level length
           break;
         case 4:  // Level 3
           current_pattern = level3_pattern;
-          pattern_length = 6;  // Explicitly set the length
+          pattern_length = 6;  // level length
           break;
         case 5:  // Level 4
           current_pattern = level4_pattern;
-          pattern_length = 7;  // Explicitly set the length
+          pattern_length = 7;  // level length
           break;
         case 6:  // Level 5
           current_pattern = level5_pattern;
-          pattern_length = 8;  // Explicitly set the length
+          pattern_length = 8;  // level length
           break;
       }
     }
