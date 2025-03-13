@@ -177,25 +177,25 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-  // Game state variables
-  static u8 game_state = 0;  // Initial = 0, Tutorial = 1, Levels 1-5 = 2-6, Game Complete = 7
+  // game state variables
+  static u8 game_state = 0;  // initial = 0, tutorial = 1, levels 1-5 = 2-6, game complete = 7
   
-  // Button track
+  // button track
   static u8 button0_pressed = 0;
   static u8 button1_pressed = 0;
   static u8 button2_pressed = 0;
   static u8 button3_pressed = 0;
   
-  // Sequence track
+  // sequence track
   static u8 sequence_position = 0;
   
-  // Game flow control
-  static u8 substate = 0;  // Sub-state within each game state 
-  static u32 last_time = 0;  // For timing non-blocking operations
-  static u8 flash_count = 0;  // Counter for light/sound pattern
-  static u8 celebration_count = 0;  // Celebration
-  static u8 all_buttons_delay_started = 0;  // For tutorial delay
-  static u8 level_complete_delay_started = 0;  // For level completion delay
+  // game flow control
+  static u8 substate = 0;  // sub-state within each game state (tutorial has 2 (LCD message and buttons), each level has 5(lcd, delay, sequence, user input, error), celebration has 2 (LCD message and jingle))
+  static u32 last_time = 0;  // for timing non-blocking operations
+  static u8 flash_count = 0;  // counter for light/sound pattern
+  static u8 celebration_count = 0;  // celebration
+  static u8 all_buttons_delay_started = 0;  // for tutorial delay
+  static u8 level_complete_delay_started = 0;  // for level completion delay
   
   // Patterns
   static const u8 level1_pattern[] = {0, 2, 1, 3};  // WHITE, YELLOW, BLUE, RED
@@ -204,17 +204,17 @@ static void UserApp1SM_Idle(void)
   static const u8 level4_pattern[] = {2, 0, 2, 1, 3, 0, 1};  // YELLOW, WHITE, YELLOW, BLUE, RED, WHITE, BLUE
   static const u8 level5_pattern[] = {3, 1, 0, 2, 3, 2, 1, 0};  // RED, BLUE, WHITE, YELLOW, RED, YELLOW, BLUE, WHITE
   
-  static u8 pattern_length = 0;  // Length of current level's pattern
-  static const u8* current_pattern = NULL;  // Pointer to current level's pattern
+  static u8 pattern_length = 0;  // length of current level pattern
+  static const u8* current_pattern = NULL;  // pointer to current level pattern
   
   WATCHDOG_BONE();
   
-  //Wait for any button press to start
+  //wait for any button press to start
   if (game_state == 0) {
     if (IsButtonPressed(BUTTON0) || IsButtonPressed(BUTTON1) || 
         IsButtonPressed(BUTTON2) || IsButtonPressed(BUTTON3)) {
       LcdCommand(LCD_CLEAR_CMD);
-      game_state = 1;  // Move to tutorial
+      game_state = 1;  // move to tutorial
       substate = 0;
       button0_pressed = 0;
       button1_pressed = 0;
@@ -231,20 +231,20 @@ static void UserApp1SM_Idle(void)
       substate = 1;
     }
     
-    // Track which buttons in tutorial
+    // track which buttons in tutorial
     static u8 tutorial_button0_pressed = 0;
     static u8 tutorial_button1_pressed = 0;
     static u8 tutorial_button2_pressed = 0;
     static u8 tutorial_button3_pressed = 0;
     
-    // Handle button presses and lights/sounds
+    // handle button presses and lights/sounds
     if (IsButtonPressed(BUTTON0) && !button0_pressed) {
       ButtonAcknowledge(BUTTON0);
       LedPWM(WHITE, LED_PWM_10);
       PWMAudioSetFrequency(BUZZER1, 500);
       PWMAudioOn(BUZZER1);
       button0_pressed = 1;
-      tutorial_button0_pressed = 1; // Track for tutorial completion
+      tutorial_button0_pressed = 1; // track for tutorial completion
     }
     if (IsButtonPressed(BUTTON1) && !button1_pressed) {
       ButtonAcknowledge(BUTTON1);
@@ -252,7 +252,7 @@ static void UserApp1SM_Idle(void)
       PWMAudioSetFrequency(BUZZER1, 392);
       PWMAudioOn(BUZZER1);
       button1_pressed = 1;
-      tutorial_button1_pressed = 1; // Track for tutorial completion
+      tutorial_button1_pressed = 1; // track for tutorial completion
     }
     if (IsButtonPressed(BUTTON2) && !button2_pressed) {
       ButtonAcknowledge(BUTTON2);
@@ -260,7 +260,7 @@ static void UserApp1SM_Idle(void)
       PWMAudioSetFrequency(BUZZER1, 330);
       PWMAudioOn(BUZZER1);
       button2_pressed = 1;
-      tutorial_button2_pressed = 1; // Track for tutorial completion
+      tutorial_button2_pressed = 1; // track for tutorial completion
     }
     if (IsButtonPressed(BUTTON3) && !button3_pressed) {
       ButtonAcknowledge(BUTTON3);
@@ -268,10 +268,10 @@ static void UserApp1SM_Idle(void)
       PWMAudioSetFrequency(BUZZER1, 294);
       PWMAudioOn(BUZZER1);
       button3_pressed = 1;
-      tutorial_button3_pressed = 1; // Track for tutorial completion
+      tutorial_button3_pressed = 1; // track for tutorial completion
     }
     
-    // Reset buttons when they are released
+    // reset buttons when released
     if (!IsButtonPressed(BUTTON0) && button0_pressed) {
       LedOff(WHITE);
       if (!IsButtonPressed(BUTTON1) && !IsButtonPressed(BUTTON2) && !IsButtonPressed(BUTTON3)) {
@@ -304,54 +304,54 @@ static void UserApp1SM_Idle(void)
       button3_pressed = 0;
     }
     
-    // Check if all buttons have been pressed (tutorial complete)
+    // check if all buttons have been pressed (tutorial complete)
     if (tutorial_button0_pressed && tutorial_button1_pressed && tutorial_button2_pressed && tutorial_button3_pressed) {
-      // Start delay timer when all buttons are first detected as pressed
+      // start delay timer when all buttons are first detected as pressed
       if (!all_buttons_delay_started) {
         all_buttons_delay_started = 1;
         last_time = G_u32SystemTime1ms;
       }
       
-      // Only proceed after the delay
+      // proceed after delay
       if (G_u32SystemTime1ms - last_time >= 500) {  // 500ms delay
-        // Reset for level 1
+        // reset for level 1
         LcdCommand(LCD_CLEAR_CMD);
         
-        // Turn everything off
+        // everything off
         PWMAudioOff(BUZZER1);
         LedOff(WHITE);
         LedOff(BLUE);
         LedOff(YELLOW);
         LedOff(RED);
         
-        // Reset for level 1
+        // reset for level 1
         button0_pressed = 0;
         button1_pressed = 0;
         button2_pressed = 0;
         button3_pressed = 0;
         
-        // Reset tutorial tracking
+        // reset tutorial tracking
         tutorial_button0_pressed = 0;
         tutorial_button1_pressed = 0;
         tutorial_button2_pressed = 0;
         tutorial_button3_pressed = 0;
         substate = 0;
-        all_buttons_delay_started = 0; // Reset for potential game restart
+        all_buttons_delay_started = 0; // reset for potential game restart
         
-        // Set up first level
+        // set up first level
         current_pattern = level1_pattern;
         pattern_length = sizeof(level1_pattern) / sizeof(level1_pattern[0]);
         
-        // Move to level 1
+        // move to level 1
         game_state = 2;
-        last_time = G_u32SystemTime1ms;  // Reset timer
+        last_time = G_u32SystemTime1ms;  // reset timer
       }
     }
   }
   
   // GAMEPLAY LEVELS (2-6)
   else if (game_state >= 2 && game_state <= 6) {
-    // Set the correct pattern for each level
+    // set the correct pattern for each level
     if (current_pattern == NULL) {
       switch (game_state) {
         case 2:  // Level 1
@@ -383,7 +383,7 @@ static void UserApp1SM_Idle(void)
     if (substate == 0) {
       LcdCommand(LCD_CLEAR_CMD);
       
-      // Display appropriate level message
+      // LCD level message
       if (game_state == 2) {
         LcdMessage(LINE1_START_ADDR, "round 1");
       } else if (game_state == 3) {
@@ -398,13 +398,13 @@ static void UserApp1SM_Idle(void)
       }
       
       last_time = G_u32SystemTime1ms;
-      substate = 1;  // Move to wait state
+      substate = 1;  // wait state
     }
     
     // SUBSTATE 1: Wait for message to be displayed (non-blocking)
     else if (substate == 1) {
       if (G_u32SystemTime1ms - last_time >= 2000) {  // 2 second delay
-        substate = 2;  // Move to pattern display
+        substate = 2;  // move to pattern display
         flash_count = 0;
         last_time = G_u32SystemTime1ms;
       }
@@ -417,9 +417,9 @@ static void UserApp1SM_Idle(void)
       u8 pattern_step = flash_count / 2;  // Which step in the pattern
       u8 is_on = flash_count % 2 == 0;    // Is the light on or off
       
-      // If we've completed the pattern
+      // if we've completed the pattern
       if (pattern_step >= pattern_length) {
-        // Pattern display complete, move to user input
+        // pattern display complete, move to user input
         substate = 3;
         sequence_position = 0;
         button0_pressed = 0;
@@ -427,7 +427,7 @@ static void UserApp1SM_Idle(void)
         button2_pressed = 0;
         button3_pressed = 0;
         
-        // Turn off any lights/sounds
+        // turn off any lights/sounds
         PWMAudioOff(BUZZER1);
         LedOff(WHITE);
         LedOff(BLUE);
@@ -436,15 +436,15 @@ static void UserApp1SM_Idle(void)
         
         last_time = G_u32SystemTime1ms;
       } 
-      // Still displaying the pattern
+      // still displaying the pattern
       else {
-        // Handle timing (1 second per state)
+        // handle timing (1 second per state)
         if (G_u32SystemTime1ms - last_time >= 1000) {
           last_time = G_u32SystemTime1ms;
           
           // ON state
           if (is_on) {
-            // Turn on appropriate light/sound based on pattern
+            // turn on appropriate light/sound based on pattern
             switch(current_pattern[pattern_step]) {
               case 0:  // WHITE
                 LedPWM(WHITE, LED_PWM_10);
@@ -485,51 +485,51 @@ static void UserApp1SM_Idle(void)
     
     // SUBSTATE 3: User input to match the pattern
     else if (substate == 3) {
-      // If user has completed the pattern
+      // if user has completed the pattern
       if (sequence_position >= pattern_length) {
-        // Start the delay when the pattern is first completed
+        // start the delay when the pattern is first completed
         if (!level_complete_delay_started) {
           level_complete_delay_started = 1;
           last_time = G_u32SystemTime1ms;
         }
         
-        // Only proceed after the delay
+        // proceed after the delay
         if (G_u32SystemTime1ms - last_time >= 500) {  // 500ms delay
-          // Move to the next level
+          // move to the next level
           game_state++;
           substate = 0;
           current_pattern = NULL;
-          pattern_length = 0;  // Reset pattern length for next level
-          level_complete_delay_started = 0;  // Reset for next level
+          pattern_length = 0;  // reset pattern length for next level
+          level_complete_delay_started = 0;  // reset for next level
           
-          // Turn off all lights/sounds
+          // turn off all lights/sounds
           PWMAudioOff(BUZZER1);
           LedOff(WHITE);
           LedOff(BLUE);
           LedOff(YELLOW);
           LedOff(RED);
           
-          // Reset sequence position and button tracking for next level
+          // reset sequence position and button tracking for next level
           sequence_position = 0;
           button0_pressed = 0;
           button1_pressed = 0;
           button2_pressed = 0;
           button3_pressed = 0;
           
-          // If that was the final level, move to completion
+          // if that was the final level, move to completion
           if (game_state > 6) {
-            game_state = 7;  // Game complete state
+            game_state = 7;  // game complete state
             celebration_count = 0;
             last_time = G_u32SystemTime1ms;
           }
         }
       } 
-      // Still collecting user input
+      // still collecting user input
       else {
         u8 expected_button = current_pattern[sequence_position];
         u8 button_pressed = 0;
         
-        // Check for button presses and validate against expected sequence
+        // check for button presses and validate against expected sequence
         if (IsButtonPressed(BUTTON0) && !button0_pressed) {
           ButtonAcknowledge(BUTTON0);
           LedPWM(WHITE, LED_PWM_10);
@@ -538,13 +538,13 @@ static void UserApp1SM_Idle(void)
           button0_pressed = 1;
           button_pressed = 1;
           
-          // Check if correct button was pressed
+          // check if correct button was pressed
           if (expected_button == 0) {
             sequence_position++;
-            last_time = G_u32SystemTime1ms;  // Reset timer for the success delay
+            last_time = G_u32SystemTime1ms;  // reset timer for the success delay
           } else {
-            // Wrong button - flash error and restart level
-            substate = 4;  // Error state
+            // wrong button - flash error and restart level
+            substate = 4;  // error state
             last_time = G_u32SystemTime1ms;
           }
         }
@@ -556,13 +556,13 @@ static void UserApp1SM_Idle(void)
           button1_pressed = 1;
           button_pressed = 1;
           
-          // Check if correct button was pressed
+          // check if correct button was pressed
           if (expected_button == 1) {
             sequence_position++;
-            last_time = G_u32SystemTime1ms;  // Reset timer for the success delay
+            last_time = G_u32SystemTime1ms;  // reset timer for the success delay
           } else {
-            // Wrong button - flash error and restart level
-            substate = 4;  // Error state
+            // wrong button - flash error and restart level
+            substate = 4;  // error state
             last_time = G_u32SystemTime1ms;
           }
         }
@@ -574,13 +574,13 @@ static void UserApp1SM_Idle(void)
           button2_pressed = 1;
           button_pressed = 1;
           
-          // Check if correct button was pressed
+          // check if correct button was pressed
           if (expected_button == 2) {
             sequence_position++;
-            last_time = G_u32SystemTime1ms;  // Reset timer for the success delay
+            last_time = G_u32SystemTime1ms;  // reset timer for the success delay
           } else {
-            // Wrong button - flash error and restart level
-            substate = 4;  // Error state
+            // wrong button - flash error and restart level
+            substate = 4;  // error state
             last_time = G_u32SystemTime1ms;
           }
         }
@@ -592,18 +592,18 @@ static void UserApp1SM_Idle(void)
           button3_pressed = 1;
           button_pressed = 1;
           
-          // Check if correct button was pressed
+          // check if correct button was pressed
           if (expected_button == 3) {
             sequence_position++;
-            last_time = G_u32SystemTime1ms;  // Reset timer for the success delay
+            last_time = G_u32SystemTime1ms;  // reset timer for the success delay
           } else {
-            // Wrong button - flash error and restart level
-            substate = 4;  // Error state
+            // wrong button - flash error and restart level
+            substate = 4;  // error state
             last_time = G_u32SystemTime1ms;
           }
         }
         
-        // Reset individual buttons when they are released (FIX 2)
+        // reset individual buttons when they are released (FIX 2)
         if (!IsButtonPressed(BUTTON0) && button0_pressed) {
           LedOff(WHITE);
           if (!IsButtonPressed(BUTTON1) && !IsButtonPressed(BUTTON2) && !IsButtonPressed(BUTTON3)) {
@@ -640,7 +640,7 @@ static void UserApp1SM_Idle(void)
     
     // SUBSTATE 4: Error state
     else if (substate == 4) {
-      // Flash all LEDs to indicate error (non-blocking)
+      // flash all LEDs to indicate error (non-blocking)
       uint32_t elapsed = G_u32SystemTime1ms - last_time;
       
       if (elapsed < 500) {
@@ -674,7 +674,7 @@ static void UserApp1SM_Idle(void)
         PWMAudioOff(BUZZER1);
       }
       else {
-        // Error indication complete, restart level
+        // error indication complete, restart level
         substate = 0;
         sequence_position = 0;
         button0_pressed = 0;
@@ -685,37 +685,41 @@ static void UserApp1SM_Idle(void)
     }
   }
   
-  // GAME COMPLETE - Victory celebration
+  // GAME COMPLETE - celebration!!
   else if (game_state == 7) {
-    // First display completion message
+    // first display completion message
     if (substate == 0) {
       LcdCommand(LCD_CLEAR_CMD);
       LcdMessage(LINE1_START_ADDR, "GAME COMPLETE!");
-      LcdMessage(LINE2_START_ADDR, "(MARIO SORTA)");
+      LcdMessage(LINE2_START_ADDR, "(MARIO KINDA)");
       substate = 1;
       last_time = G_u32SystemTime1ms;
     }
-    // Then do the celebration
+    // then do the celebration
     else if (substate == 1) {
   static u32 jingle_step = 0;
   static u32 jingle_last_time = 0;
   
-  // First time in this state, initialize the jingle
+  // first time in this state, initialize the jingle
   if (jingle_step == 0) {
     jingle_last_time = G_u32SystemTime1ms;
     jingle_step = 1;
     
-    // Turn on all LEDs for celebration
+    // turn on all LEDs
     LedPWM(WHITE, LED_PWM_10);
     LedPWM(BLUE, LED_PWM_25);
+    LedPWM(CYAN, LED_PWM_30);
+    LedPWM(GREEN, LED_PWM_30);
+    LedOn(ORANGE);
+    LedPWM(PURPLE, LED_PWM_25);
     LedOn(YELLOW);
     LedOn(RED);
   }
   
-  // Play Mario level clear jingle
+  // play Mario level clear jingle
   uint32_t current_time = G_u32SystemTime1ms;
   
-  // Jingle sequence with timings
+  // jingle sequence with timings
   switch (jingle_step) {
     case 1: // G4 sixteenth note
       if (current_time - jingle_last_time >= 0) {
@@ -884,9 +888,12 @@ static void UserApp1SM_Idle(void)
         PWMAudioOff(BUZZER1);
         LedOff(WHITE);
         LedOff(BLUE);
+        LedOff(CYAN);
+        LedOff(GREEN);
+        LedOff(PURPLE);
+        LedOff(ORANGE);
         LedOff(YELLOW);
         LedOff(RED);
-        
         // Reset the game
         LcdCommand(LCD_CLEAR_CMD);
         jingle_step = 0;
@@ -910,6 +917,10 @@ static void UserApp1SM_Idle(void)
     PWMAudioOff(BUZZER1);
     LedOff(WHITE);
     LedOff(BLUE);
+    LedOff(CYAN);
+    LedOff(GREEN);
+    LedOff(PURPLE);
+    LedOff(ORANGE);
     LedOff(YELLOW);
     LedOff(RED);
     
