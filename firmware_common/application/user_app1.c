@@ -63,34 +63,11 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
 //static u32 UserApp1_u32Timeout;                           /*!< @brief Timeout counter used across states */
 
-static u8 UserApp_au8GameName[] = "A Memory Game    TM";
+static u8 UserApp_au8GameName[] = "A Memory Game";
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
-void delay_1s();
-void delay_non_blocking();
-void whitelightandbuzz();
-void bluelightandbuzz();
-void yellowlightandbuzz();
-void redlightandbuzz();
-void deacwhitelightandbuzz();
-void deacbluelightandbuzz();
-void deacyellowlightandbuzz();
-void deacredlightandbuzz();
-void gameseq_0();
-void gameseq_1();
-void gameseq_2();
-void gameseq_3();
-void level_1();
-void level_2();
-void level_3();
-void level_4();
-void level_5();
-void level_6();
-void level_7();
-void level_8();
-void level_9();
-void level_10();
+
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @publicsection */                                                                                            
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -194,8 +171,8 @@ static void UserApp1SM_Idle(void)
   static u32 last_time = 0;  // for timing non-blocking operations
   static u8 flash_count = 0;  // counter for light/sound pattern
   static u8 celebration_count = 0;  // celebration
-  static u8 all_buttons_delay_started = 0;  // for tutorial delay
-  static u8 level_complete_delay_started = 0;  // for level completion delay
+  static u8 all_buttons_delay_started = 0;  // tutorial delay
+  static u8 level_complete_delay_started = 0;  // level completion delay
   
   // Patterns
   static const u8 level1_pattern[] = {0, 2, 1, 3};  // WHITE, YELLOW, BLUE, RED
@@ -205,7 +182,7 @@ static void UserApp1SM_Idle(void)
   static const u8 level5_pattern[] = {3, 1, 0, 2, 3, 2, 1, 0};  // RED, BLUE, WHITE, YELLOW, RED, YELLOW, BLUE, WHITE
   
   static u8 pattern_length = 0;  // length of current level pattern
-  static const u8* current_pattern = NULL;  // pointer to current level pattern
+  static const u8* current_pattern = NULL;  
   
   WATCHDOG_BONE();
   
@@ -226,8 +203,8 @@ static void UserApp1SM_Idle(void)
   // TUTORIAL - Show instructions and let user try each button
   else if (game_state == 1) {
     if (substate == 0) {
-      LcdMessage(LINE1_START_ADDR, "Tutorial:");
-      LcdMessage(LINE2_START_ADDR, "Press The Buttons");
+      LcdMessage(LINE1_START_ADDR, "Round 1: Tutorial");
+      LcdMessage(LINE2_START_ADDR, "Press each button");
       substate = 1;
     }
     
@@ -385,15 +362,15 @@ static void UserApp1SM_Idle(void)
       
       // LCD level message
       if (game_state == 2) {
-        LcdMessage(LINE1_START_ADDR, "round 1");
+        LcdMessage(LINE1_START_ADDR, "Round 2");
       } else if (game_state == 3) {
-        LcdMessage(LINE1_START_ADDR, "round 2");
+        LcdMessage(LINE1_START_ADDR, "Round 3");
       } else if (game_state == 4) {
-        LcdMessage(LINE1_START_ADDR, "round 3");
+        LcdMessage(LINE1_START_ADDR, "Round 4");
       } else if (game_state == 5) {
-        LcdMessage(LINE1_START_ADDR, "round 4");
+        LcdMessage(LINE1_START_ADDR, "Round 5");
       } else if (game_state == 6) {
-        LcdMessage(LINE1_START_ADDR, "round 5");
+        LcdMessage(LINE1_START_ADDR, "Round 6");
         LcdMessage(LINE2_START_ADDR, "FINAL BOSS!");
       }
       
@@ -416,10 +393,12 @@ static void UserApp1SM_Idle(void)
       // Each pattern element needs 2 states: ON and OFF
       u8 pattern_step = flash_count / 2;  // Which step in the pattern
       u8 is_on = flash_count % 2 == 0;    // Is the light on or off
-      
+    
+
       // if we've completed the pattern
       if (pattern_step >= pattern_length) {
         // pattern display complete, move to user input
+        LcdMessage(LINE2_START_ADDR, "Now it's your turn");
         substate = 3;
         sequence_position = 0;
         button0_pressed = 0;
@@ -942,48 +921,14 @@ static void UserApp1SM_Idle(void)
 WATCHDOG_BONE();  // Feed the watchdog once more before exiting
 }
 }
-void whitelightandbuzz(){
-    LedOn(WHITE);
-    PWMAudioSetFrequency(BUZZER1,500);
-    PWMAudioOn(BUZZER1);
-}
-void bluelightandbuzz(){
-    LedOn(BLUE);
-    PWMAudioSetFrequency(BUZZER1,392);
-    PWMAudioOn(BUZZER1);
-}
-void yellowlightandbuzz(){
-    LedOn(YELLOW);
-    PWMAudioSetFrequency(BUZZER1,330);
-    PWMAudioOn(BUZZER1);
-}
-void redlightandbuzz(){
-    LedOn(RED);
-    PWMAudioSetFrequency(BUZZER1,294);
-    PWMAudioOn(BUZZER1);
-}
-void deacwhitelightandbuzz(){
-  LedOff(WHITE);
-  PWMAudioOff(BUZZER1);
-}
-void deacbluelightandbuzz(){
-  LedOff(BLUE);
-  PWMAudioOff(BUZZER1);
-}
-void deacyellowlightandbuzz(){
-  LedOff(YELLOW);
-  PWMAudioOff(BUZZER1);
-}
-void deacredlightandbuzz(){
-  LedOff(RED);
-  PWMAudioOff(BUZZER1);
-}
+
 void delay_1s(void)
 {
     uint32_t start_time = G_u32SystemTime1ms;
     while ( (G_u32SystemTime1ms - start_time) < 1000 );  // Wait for 1000ms
     WATCHDOG_BONE();  // Feed the watchdog during delay
 }
+
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
 static void UserApp1SM_Error(void)          
